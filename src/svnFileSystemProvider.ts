@@ -27,6 +27,15 @@ import {
 const THREE_MINUTES = 1000 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
 
+// Revisions `svn cat` serves from the local pristine store. Mirrors the check in
+// SvnRepository.showBuffer(). An absent ref means no -r, which svn resolves to
+// BASE for a working copy path.
+const LOCAL_REFS = ["BASE", "COMMITTED", "PREV"];
+
+function isLocalRef(ref?: string): boolean {
+  return !ref || LOCAL_REFS.includes(ref.toUpperCase());
+}
+
 interface CacheRow {
   uri: Uri;
   timestamp: number;
@@ -104,12 +113,21 @@ export class SvnFileSystemProvider implements FileSystemProvider, Disposable {
   async stat(uri: Uri): Promise<FileStat> {
     await this.sourceControlManager.isInitialized;
 
-    const { fsPath } = fromSvnUri(uri);
+    const { fsPath, extra } = fromSvnUri(uri);
 
     const repository = this.sourceControlManager.getRepository(fsPath);
 
     if (!repository) {
       throw FileSystemError.FileNotFound;
+    }
+
+    // `svn list` is a repository-side operation, and its only purpose here is
+    // size/mtime. For locally served revisions that is a network round trip for
+    // data the working copy already holds. mtime is fixed rather than "now"
+    // because invalidation comes from fireChangeEvents(), and a moving mtime
+    // makes VSCode re-read the document on every stat.
+    if (isLocalRef(extra.ref)) {
+      return { type: FileType.File, size: 0, mtime: 0, ctime: 0 };
     }
 
     let size = 0;
