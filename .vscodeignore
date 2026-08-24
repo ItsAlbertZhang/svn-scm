@@ -4,6 +4,7 @@
 .vscode/**
 **/*.map
 **/*.ts
+build-local.md
 build.yml
 coverage/**
 coverconfig.json
