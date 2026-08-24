@@ -38,6 +38,28 @@ import { matchAll } from "./util/globMatch";
 
 type State = "uninitialized" | "initialized";
 
+function resolveIgnoredRepositories(
+  entries: string[],
+  base: string | undefined
+): Set<string> {
+  const resolved: string[] = [];
+
+  for (const entry of entries) {
+    if (path.isAbsolute(entry)) {
+      resolved.push(entry);
+    } else if (base !== undefined) {
+      // Relative entries, "." and ".." included, resolve against the workspace
+      // folder that owns the setting - the same folder getConfiguration() reads
+      // the resource-scoped value from. Without one there is nothing meaningful
+      // to resolve against, so the entry is dropped rather than resolved
+      // against the extension host's working directory.
+      resolved.push(path.resolve(base, entry));
+    }
+  }
+
+  return new Set(resolved.map(normalizePath));
+}
+
 export class SourceControlManager implements IDisposable {
   private _onDidOpenRepository = new EventEmitter<Repository>();
   public readonly onDidOpenRepository: Event<Repository> = this
@@ -279,10 +301,11 @@ export class SourceControlManager implements IDisposable {
       // Config based on folder path
       const resourceConfig = workspace.getConfiguration("svn", Uri.file(path));
 
-      const ignoredRepos = new Set(
-        (resourceConfig.get<string[]>("ignoreRepositories") || []).map(p =>
-          normalizePath(p)
-        )
+      const workspaceFolder = workspace.getWorkspaceFolder(Uri.file(path));
+
+      const ignoredRepos = resolveIgnoredRepositories(
+        resourceConfig.get<string[]>("ignoreRepositories") || [],
+        workspaceFolder === undefined ? undefined : workspaceFolder.uri.fsPath
       );
 
       if (ignoredRepos.has(normalizePath(path))) {

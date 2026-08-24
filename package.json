@@ -1096,7 +1096,7 @@
                     ],
                     "default": null,
                     "scope": "resource",
-                    "description": "List of SVN repositories to ignore."
+                    "description": "List of SVN repositories to ignore. Entries may be absolute paths, or paths relative to the workspace folder (\".\" and \"..\" are resolved)."
                 },
                 "svn.ignoreWorkingCopyIsTooOld": {
                     "type": "boolean",
