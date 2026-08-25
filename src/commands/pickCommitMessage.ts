@@ -2,20 +2,20 @@ import { QuickPickItem, window } from "vscode";
 import { Repository } from "../repository";
 import { Command } from "./command";
 import { configuration } from "../helpers/configuration";
-import * as semver from "semver";
 import { ISvnLogEntry } from "../common/types";
 
 export class PickCommitMessage extends Command {
-  constructor(private svnVersion: string) {
+  constructor(_svnVersion: string) {
     super("svn.pickCommitMessage", { repository: true });
   }
 
   public async execute(repository: Repository) {
-    const is18orGreater = semver.satisfies(this.svnVersion, ">= 1.8");
     let logs: ISvnLogEntry[] = [];
     const user = configuration.get("previousCommitsUser", null);
-    if (user && is18orGreater) {
-      logs = await repository.logByUser(user);
+    if (user) {
+      logs = (await repository.log("HEAD", "0", 300))
+        .filter(entry => entry.author === user)
+        .slice(0, 10);
     } else {
       logs = await repository.log("HEAD", "0", 20);
     }

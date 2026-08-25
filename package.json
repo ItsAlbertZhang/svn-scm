@@ -127,7 +127,7 @@
                 {
                     "id": "branchchanges",
                     "name": "Branch Changes",
-                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0"
+                    "when": "config.svn.enabled && svnOpenRepositoryCount != 0 && config.svn.branchChanges.enabled"
                 }
             ]
         },
@@ -987,6 +987,11 @@
                     "type": "boolean",
                     "description": "Whether auto refreshing is enabled",
                     "default": true
+                },
+                "svn.branchChanges.enabled": {
+                    "type": "boolean",
+                    "description": "Enable the Branch Changes view (computes changes of the current branch against its copy source; can be very expensive on repositories with long history). Requires a window reload to take effect.",
+                    "default": false
                 },
                 "svn.commit.changes.selectedAll": {
                     "type": "boolean",

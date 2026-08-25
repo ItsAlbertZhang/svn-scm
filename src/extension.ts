@@ -51,12 +51,15 @@ async function init(
     new SvnProvider(sourceControlManager),
     new RepoLogProvider(sourceControlManager),
     new ItemLogProvider(sourceControlManager),
-    new BranchChangesProvider(sourceControlManager),
     new CheckActiveEditor(sourceControlManager),
     new OpenRepositoryCount(sourceControlManager),
     new IsSvn18orGreater(info.version),
     new IsSvn19orGreater(info.version)
   );
+
+  if (configuration.get<boolean>("branchChanges.enabled")) {
+    disposables.push(new BranchChangesProvider(sourceControlManager));
+  }
 
   outputChannel.appendLine(`Using svn "${info.version}" from "${info.path}"`);
 
